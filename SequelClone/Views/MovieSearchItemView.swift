@@ -6,61 +6,73 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct MovieSearchItemView: View {
-    var movie: Result
-    @EnvironmentObject var movielists: MovieLists
+    var movieResult: Result
+    @State var movie: Movie = Movie(id: 0, originalTitle: "", posterPath: "", releaseDate: "", watched: 0, rating: 0)
+    @Environment(\.modelContext) private var modelContext
+    
+    @Query private var movies: [Movie]
+    
     @State private var navigateToDetail = false
     @State private var watched = 0
+    
     var body: some View {
         ZStack{
             NavigationLink(destination: MovieDetailView(movie: movie), isActive: $navigateToDetail) {
                 EmptyView()
             }
             HStack {
-                let path = movie.poster_path ?? ""
-                AsyncImage(url: URL(string: "https://image.tmdb.org/t/p/w200/\(path)")){
-                    image in
-                    image.resizable()
-                        .scaledToFit()
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white, lineWidth: 0.2)
-                        )
-                        .frame(height: 130)
-                } placeholder: {
-                    Image("no_poster")
-                        .resizable()
-                        .scaledToFit()
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white, lineWidth: 0.2)
-                        )
+                HStack{
+                    let path = movieResult.poster_path ?? ""
+                    AsyncImage(url: URL(string: "https://image.tmdb.org/t/p/w200/\(path)")){
+                        image in
+                        image.resizable()
+                            .scaledToFit()
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white, lineWidth: 0.2)
+                            )
+                            .frame(height: 130)
+                    } placeholder: {
+                        Image("no_poster")
+                            .resizable()
+                            .scaledToFit()
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white, lineWidth: 0.2)
+                            )
 
-                        .frame(height: 130)
-                }
-
-                VStack(alignment: .leading) {
-                    if(movielists.watchlist.contains(movie)){
-                        Text("WATCHLIST")
-                            .foregroundStyle(.redPrimary)
-                            .font(.caption)
-                    } else if(movielists.watched.contains(movie)){
-                        Text("WATCHED")
-                            .foregroundStyle(.redPrimary)
-                            .font(.caption)
+                            .frame(height: 130)
                     }
-                    Text(movie.original_title)
-                        .bold()
-                        .multilineTextAlignment(.leading)
-                    Text(movie.release_date)
-                        .foregroundStyle(.gray)
-                        .multilineTextAlignment(.leading)
+
+                    VStack(alignment: .leading) {
+                        if(movie.watched == 1){
+                            Text("WATCHLIST")
+                                .foregroundStyle(.redPrimary)
+                                .font(.caption)
+                        } else if(movie.watched == 2){
+                            Text("WATCHED")
+                                .foregroundStyle(.redPrimary)
+                                .font(.caption)
+                        }
+                        Text(movieResult.original_title)
+                            .bold()
+                            .multilineTextAlignment(.leading)
+                        Text(movieResult.release_date)
+                            .foregroundStyle(.gray)
+                            .multilineTextAlignment(.leading)
+                            
+                    }
                 }
+                .accessibilityElement(children: .combine)
+                
                 Spacer()
-                if(!movielists.watchlist.contains(movie) && !movielists.watched.contains(movie)){
+                
+                if(movie.watched == 0){
                     Image(systemName: "plus")
                         .resizable()
                         .frame(width: 10, height: 10)
@@ -69,12 +81,14 @@ struct MovieSearchItemView: View {
                         .shadow(radius: 5)
                         .bold()
                         .onTapGesture {
-                            print(movie.original_title)
-                            movielists.watchlist.insert(movie)
-                            movielists.ratings[movie.id] = 0
+                            print(movieResult.original_title)
+                            movie.watched = 1
+                            modelContext.insert(movie)
                         }
                         .background(Circle().foregroundStyle(.redPrimary))
                         .padding()
+                        .accessibilityRemoveTraits(.isImage)
+                        .accessibilityLabel("Add to watchlist button")
                 } else {
                     Menu {
                         Section {
@@ -86,15 +100,15 @@ struct MovieSearchItemView: View {
                             .onChange(of: watched) { oldValue, newValue in
                                 switch newValue {
                                 case 1:
-                                    if(movielists.watched.contains(movie)){
-                                        movielists.watched.remove(movie)
-                                        movielists.watchlist.insert(movie)
+                                    if(movie.watched == 2){
+                                        movie.watched = 1
+                                        modelContext.insert(movie)
                                         watched = 1
                                     }
                                 case 2:
-                                    if(movielists.watchlist.contains(movie)){
-                                        movielists.watchlist.remove(movie)
-                                        movielists.watched.insert(movie)
+                                    if(movie.watched == 1){
+                                        movie.watched = 2
+                                        modelContext.insert(movie)
                                         watched = 2
                                     }
                                 default:
@@ -105,11 +119,9 @@ struct MovieSearchItemView: View {
                         }
                         Divider()
                         Button(role: .destructive) {
-                            if(movielists.watched.contains(movie)){
-                                movielists.watched.remove(movie)
-                            } else if(movielists.watchlist.contains(movie)) {
-                                movielists.watchlist.remove(movie)
-                            }
+                            watched = 0
+                            modelContext.delete(movie)
+                            movie = Movie(id: movieResult.id, originalTitle: movieResult.original_title, posterPath: movieResult.poster_path, releaseDate: movieResult.release_date, watched: 0, rating: 0)
                         } label: {
                             Label("Remove...", systemImage: "trash")
                         }
@@ -121,9 +133,9 @@ struct MovieSearchItemView: View {
                             .padding()
                     } 
                     .onTapGesture {
-                        if movielists.watchlist.contains(movie) {
+                        if movie.watched == 1 {
                             watched = 1
-                        } else if movielists.watched.contains(movie) {
+                        } else if movie.watched == 2 {
                             watched = 2
                         } else {
                             watched = 0
@@ -134,6 +146,16 @@ struct MovieSearchItemView: View {
                 navigateToDetail = true
             }
         }
-
+        .task {
+            let arrayMovie = movies.filter({ movie in
+                movie.id == movieResult.id
+            })
+            
+            if (!arrayMovie.isEmpty) {
+                movie = arrayMovie[0]
+            } else {
+                movie = Movie(id: movieResult.id, originalTitle: movieResult.original_title, posterPath: movieResult.poster_path, releaseDate: movieResult.release_date, watched: 0, rating: 0)
+            }
+        }
     }
 }

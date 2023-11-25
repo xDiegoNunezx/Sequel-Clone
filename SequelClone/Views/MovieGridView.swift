@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MovieGridView: View {
     @State private var gridLayout: [GridItem] = [GridItem(.flexible()),GridItem(.flexible()),GridItem(.flexible())]
-    var movies: [Result]
+    var movies: [Movie]
     
     var body: some View { 
         ScrollView(.vertical, showsIndicators: true) {
@@ -17,16 +17,17 @@ struct MovieGridView: View {
                 ForEach(movies.indices, id: \.self){ index in
                         VStack(alignment: .leading){
                             MovieGridItemView(movie: movies[index])
-                            Text(movies[index].original_title)
+                            Text(movies[index].originalTitle)
                                 .font(.caption)
                                 .multilineTextAlignment(.leading)
                                 .lineLimit(2)
                                 .bold()
-                            Text(movies[index].release_date)
+                            Text(movies[index].releaseDate)
                                 .font(.caption)
                                 .foregroundStyle(.gray)
                                 .multilineTextAlignment(.leading)
                         }
+                        .accessibilityElement(children: .combine)
                 }
             }
             .padding(.horizontal)
@@ -34,6 +35,6 @@ struct MovieGridView: View {
     }
 }
 
-#Preview {
-    MovieGridView(movies: [])
-}
+//#Preview {
+//    MovieGridView(movies: [])
+//}

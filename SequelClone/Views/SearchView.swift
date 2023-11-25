@@ -36,8 +36,8 @@ struct SearchView: View {
             }
             Spacer()
             List {
-                ForEach(movies.dataMovies){ item in
-                    MovieSearchItemView(movie: item)
+                ForEach(movies.dataMovies){ item in                    
+                    MovieSearchItemView(movieResult: item)
                 }
             }
             .listStyle(PlainListStyle())

@@ -7,9 +7,9 @@
 
 import Foundation
 import SwiftData
-
-class MovieLists: ObservableObject {
-    @Published var watchlist = Set<Result>()
-    @Published var watched = Set<Result>()
-    @Published var ratings: [Int:Float] = [:]
-}
+//
+//class MovieLists: ObservableObject {
+//    @Published var watchlist = Set<Result>()
+//    @Published var watched = Set<Result>()
+//    @Published var ratings: [Int:Float] = [:]
+//}

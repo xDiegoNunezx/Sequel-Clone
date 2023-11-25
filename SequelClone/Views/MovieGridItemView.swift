@@ -9,16 +9,15 @@ import SwiftUI
 import SwiftData
 
 struct MovieGridItemView: View {
-    @EnvironmentObject var movielists: MovieLists
-    //@Environment(\.modelContext) private var modelContext
+    @Environment(\.modelContext) private var modelContext
+    @Query private var movies: [Movie]
     @State private var watched = 1
-    //@Query private var movieData: MovieData
-    var movie: Result
+    var movie: Movie
     
     var body: some View {
         NavigationLink(destination: MovieDetailView(movie: movie)) {
             ZStack(alignment: .bottomLeading) {
-                let path = movie.poster_path ?? ""
+                let path = movie.posterPath ?? ""
                 AsyncImage(url: URL(string: "https://image.tmdb.org/t/p/w200/\(path)")) { image in
                     image.resizable()
                         .scaledToFit()
@@ -36,7 +35,7 @@ struct MovieGridItemView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color.white, lineWidth: 0.2)
                         )
-                } 
+                }
                 .contextMenu {
                     Section {
                         Picker("", selection: $watched) {
@@ -47,24 +46,16 @@ struct MovieGridItemView: View {
                         .onChange(of: watched) { oldValue, newValue in
                             switch newValue {
                             case 1:
-                                if(movielists.watched.contains(movie)){
-                                    movielists.watched.remove(movie)
-                                    movielists.watchlist.insert(movie)
+                                if(movie.watched == 2){
+                                    movie.watched = 1
                                     watched = 1
-                                    
-//                                    movieData.watchlist = Array(movielists.watchlist)
-//                                    movieData.watched = Array(movielists.watched)
-//                                    modelContext.insert(movieData)
+                                    modelContext.insert(movie)
                                 }
                             case 2:
-                                if(movielists.watchlist.contains(movie)){
-                                    movielists.watchlist.remove(movie)
-                                    movielists.watched.insert(movie)
+                                if(movie.watched == 1){
+                                    movie.watched = 2
                                     watched = 2
-                                    
-//                                    movieData.watchlist = Array(movielists.watchlist)
-//                                    movieData.watched = Array(movielists.watched)
-//                                    modelContext.insert(movieData)
+                                    modelContext.insert(movie)
                                 }
                             default:
                                 break
@@ -74,28 +65,20 @@ struct MovieGridItemView: View {
                     
                     Divider()
                     Button(role: .destructive) {
-                        if(movielists.watched.contains(movie)){
-                            movielists.watched.remove(movie)
-                        } else if(movielists.watchlist.contains(movie)) {
-                            movielists.watchlist.remove(movie)
-                        }
-                        
-//                        movieData.watchlist = Array(movielists.watchlist)
-//                        movieData.watched = Array(movielists.watched)
-//                        modelContext.insert(movieData)
+                        modelContext.delete(movie)
                     } label: {
                         Label("Remove...", systemImage: "trash")
                     }
                 }
                 
-                if(movielists.ratings[movie.id] ?? 0 > 0) {
+                if(movie.rating > 0) {
                     VStack {
                         HStack {
                             Image(systemName: "star.fill")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 10, height: 10)
-                            Text("\(movielists.ratings[movie.id] ?? 0)")
+                            Text("\(movie.rating)")
                                 .bold()
                                 .font(.caption2)
                         }
@@ -108,9 +91,9 @@ struct MovieGridItemView: View {
             }
         }
         .task {
-            if movielists.watchlist.contains(movie) {
+            if movie.watched == 1 {
                 watched = 1
-            } else if movielists.watched.contains(movie) {
+            } else if movie.watched == 2 {
                 watched = 2
             } else {
                 watched = 0

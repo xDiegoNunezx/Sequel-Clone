@@ -13,7 +13,7 @@ class SequelViewModel: ObservableObject {
     @Published var title = ""
     @Published var movieId = 0
     @Published var show = false
-    @Published var movie = Movie(id: 0, backdrop_path: "", genres: [], original_title: "", poster_path: "", release_date: "")
+    @Published var movieResult = MovieResult(id: 0, backdrop_path: "", genres: [], original_title: "", poster_path: "", release_date: "")
 
     func fetchSearch(movie: String) async {
         do{
@@ -45,9 +45,9 @@ class SequelViewModel: ObservableObject {
             
             print(data)
             
-            let json = try JSONDecoder().decode(Movie.self, from: data)
-            
-            self.movie = json
+            let json = try JSONDecoder().decode(MovieResult.self, from: data)
+    
+            self.movieResult = json
             
             print(json)
             

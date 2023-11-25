@@ -17,18 +17,23 @@ struct MoviesView: View {
             .setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
     }
     
-    //@Environment(\.modelContext) private var modelContext
-    @EnvironmentObject private var movielists: MovieLists
+    //@EnvironmentObject private var movielists: MovieLists
+    @Environment(\.modelContext) private var modelContext
     @State private var selection = 0
     @State private var showModal = false
-    //@Query private var movieData: [MovieData]
+    
+    @Query(filter:#Predicate<Movie> { movie in movie.watched == 1})
+    private var watchlist: [Movie]
+    
+    @Query(filter:#Predicate<Movie> { movie in movie.watched == 2})
+    private var watched: [Movie]
     
     var body: some View {
         NavigationStack {
             ZStack {
                 ScrollView(.vertical, showsIndicators: true) {
                     ZStack{
-                        NavigationLink(destination: HomeView()) {
+                        NavigationLink(destination: EmptyView()) {
                             HStack {
                                 Image(systemName: "books.vertical.fill")
                                 Text("Your collections")
@@ -63,9 +68,9 @@ struct MoviesView: View {
                     .padding(.horizontal)
                     
                     if(selection == 0){
-                        MovieGridView(movies: Array(movielists.watchlist))
+                        MovieGridView(movies: watchlist)
                     } else {
-                        MovieGridView(movies: Array(movielists.watched))
+                        MovieGridView(movies: watched)
                     }
                 }
                 VStack {
@@ -93,10 +98,6 @@ struct MoviesView: View {
                 }
                 .navigationTitle("Movies")
             }
-        }
-        .task {
-//            movielists.watchlist = Set(movieData.watchlist)
-//            movielists.watched = Set(movieData.watched)
         }
     }
 }
